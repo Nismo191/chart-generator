@@ -1,0 +1,17 @@
+default_colours:
+- '#f0991a' #1
+- '#820000' #2
+- '#32f01a' #3
+- '#af1af0' #4
+- '#070d0d' #Background
+- '#016795' #Highlight
+resolutions:
+- 3840x2160
+- 1920x1080
+- 1300x1300
+sub_title_presets:
+- Higher scores indicate higher performance
+- Lower scores indicate higher performance
+title_presets:
+- CPU Scores
+- GPU Scores
