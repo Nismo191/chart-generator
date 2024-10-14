@@ -7,6 +7,7 @@ import pandas as pd
 import textwrap
 
 def gradientbars(bars, range, colmap):
+      
       ax = bars[0].axes
       lim = ax.get_xlim()+ax.get_ylim()
       for bar in bars:
@@ -19,17 +20,17 @@ def gradientbars(bars, range, colmap):
       ax.axis(lim)  
 
 def hex_to_rgb(hex):
-    print(hex)    
-    hex = hex.replace("#", "")
-    rgb = []
-    for i in (0, 2, 4):
-        decimal = int(hex[i:i+2], 16)
-        rgb.append(decimal/255)
-    
-    return tuple(rgb)
+  hex = hex.replace("#", "")
+  rgb = []
+  for i in (0, 2, 4):
+    decimal = int(hex[i:i+2], 16)
+    rgb.append(decimal/255)
+  
+  return tuple(rgb)
 
 def adjust_brightness(color, factor):
     return tuple(min(1, max(0, c * factor)) for c in color)
+
 
 
 def get_colors(colours):
@@ -48,38 +49,15 @@ def get_colors(colours):
     return cmaps
 
 
-
-def generate_chart(df, 
-                    filename, 
-                    size, 
-                    bg_color, 
-                    sorted_col, 
-                    is_ascending, 
-                    highlight, 
-                    colours, 
-                    highlight_color, 
-                    bar_width, 
-                    bar_score_offset, 
-                    title_font_size, 
-                    subtitle_font_size,
-                    axis_font_size, 
-                    legend_font_size,
-                    bar_data_font_size, 
-                    title, 
-                    x_title_pos, 
-                    y_title_pos, 
-                    sub_text, 
-                    legend_text
-                    ):
+def generate_chart(df, size, bg_color, sorted_col, is_ascending, highlight, colours, highlight_color, bar_width, bar_score_offset, title_font_size, tick_font_size, title, left_margin_size, right_margin_size, sub_text, legend_text):
     x_tick_font_size = 15
     if size == "3840x2160":
         title_font_size = title_font_size*2
-        subtitle_font_size = subtitle_font_size*2
-        axis_font_size = axis_font_size*2
-        legend_font_size = legend_font_size*2
-        bar_data_font_size = bar_data_font_size*2
+        tick_font_size = tick_font_size*2
         x_tick_font_size = x_tick_font_size*2
-         
+        
+
+   
     col_keys = []
 
     for key, value in colours.items():
@@ -88,7 +66,6 @@ def generate_chart(df,
 
     colours["highlight"] = hex_to_rgb(highlight_color)
     custom_cmaps = get_colors(colours)
-
 
     # Sort DF
     if sorted_col != "None":
@@ -110,11 +87,11 @@ def generate_chart(df,
     # # Change font color
     ax.tick_params(axis='y', colors='white', width=2)  # Y-axis tick labels
     ax.tick_params(axis='x', colors='white', width=2)  # X-axis tick labels
-    title = ax.set_title(title, fontsize = title_font_size, color='white', bbox=dict(facecolor='#005CB9', edgecolor='black', boxstyle='square,pad=0.2'), loc='center', x=x_title_pos, y=y_title_pos)
+    title = ax.set_title(title, fontsize = title_font_size, color='white', bbox=dict(facecolor='#005CB9', edgecolor='black', boxstyle='square,pad=0.2'), loc='left')
 
     if sub_text != "":
         wrapped_text = "\n".join(textwrap.wrap(sub_text, width=25))
-        ax.text(0.95, 1.02, wrapped_text, transform=ax.transAxes, color='white',fontsize=subtitle_font_size, verticalalignment='center', horizontalalignment='right', bbox=dict(facecolor='#005CB9',boxstyle='square,pad=0.5'))
+        ax.text(0.95, 1.02, wrapped_text, transform=ax.transAxes, color='white',fontsize=tick_font_size, verticalalignment='center', horizontalalignment='right', bbox=dict(facecolor='#005CB9',boxstyle='square,pad=0.5'))
 
 
     # Set the positions for the bars
@@ -126,12 +103,10 @@ def generate_chart(df,
         if df[column].name.startswith("score_"):
             bars.append(ax.barh(positions + (i - len(df.columns)/2) * bar_width, df[column], bar_width, color='xkcd:red', edgecolor='xkcd:red'))
 
-
     # Apply Gradients to bars
     for i, bar in enumerate(bars):
         gradientbars(bar, 3000, custom_cmaps[i])
-        ax.bar_label(bar, padding=-bar_score_offset, color='white', fontsize=bar_data_font_size-2, label_type='edge', fontweight='bold')
-        
+        ax.bar_label(bar, padding=-bar_score_offset, color='white', fontsize=tick_font_size-2, label_type='edge', fontweight='bold')
         
 
 
@@ -149,7 +124,7 @@ def generate_chart(df,
                     grad = np.atleast_2d(np.linspace(0,1*w/w,256))
                     ax.imshow(grad, extent=[x,x+w,y,y+h], aspect="auto", zorder=0, norm=mcolors.NoNorm(vmin=0,vmax=1), cmap=custom_cmaps[len(custom_cmaps)-1])
 
-                    bar.set_edgecolor(highlight_color)
+                    bar.set_edgecolor(colours[col_keys[i]])
                     bar.set_linewidth(2)
         
 
@@ -179,9 +154,9 @@ def generate_chart(df,
     ax.set_yticks(positions)
     ax.set_yticklabels(y_labels, ha='right')
 
-    # plt.subplots_adjust(left=left_margin_size, right=right_margin_size)
+    plt.subplots_adjust(left=left_margin_size, right=right_margin_size)
 
-    plt.yticks(fontsize=axis_font_size)
+    plt.yticks(fontsize=tick_font_size)
     plt.xticks(fontsize=x_tick_font_size)
 
 
@@ -194,10 +169,10 @@ def generate_chart(df,
             col_index = col_index + 1
 
 
-    ax.legend(bbox_to_anchor=(-0.05, 0), handles=legend, fontsize=legend_font_size/2, handlelength=2.5, handleheight=2, borderaxespad=0.5)
+    ax.legend(bbox_to_anchor=(-0.05, 0), handles=legend, fontsize=tick_font_size/2, handlelength=2.5, handleheight=2, borderaxespad=0.5)
 
     # plt.show()
-    plt.savefig(filename)
+    plt.savefig("frameview_output.png")
 
     return df
 

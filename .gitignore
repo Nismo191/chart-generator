@@ -1,0 +1,11 @@
+# Ignore TestFiles folder
+TestFiles/
+FrameviewTests/
+
+# Ignore other common files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.DS_Store

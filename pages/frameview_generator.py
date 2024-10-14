@@ -33,26 +33,103 @@ else:
         'sub_title_presets': ['Higher scores indicate higher performance', 'Lower scores indicate higher performance']
         }
     save_config(config, config_file_path)
-
+    
 
 st.set_page_config(
     page_title="Chart Generator",
     initial_sidebar_state='collapsed'
-)   
+) 
 
 
-st.title("Chart Generator")
+st.title("Frameview Generator")
 
-uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+uploaded_files = st.file_uploader("Choose first CSV file", type="csv", accept_multiple_files=True)
 
-if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+final_df = None
+
+if uploaded_files is not None:
+    data_array = []
+    # with st.form("FormTest"):
+    for i in range(len(uploaded_files)):
+        df = pd.read_csv(uploaded_files[i])
+        # st.write(uploaded_files[i].name)
+        # st.write(df)
+        data_array.append(df)
+        
+        preview = st.checkbox("Show Preview for " + uploaded_files[i].name)
+        if preview:
+            st.subheader("Data Preview")
+            st.write(df)
 
 
-    preview = st.checkbox("Show Preview")
-    if preview:
-        st.subheader("Data Preview")
-        st.write(df.head())
+        locals()["exclude_"+str(i)] = st.multiselect("Exclude Columns " + uploaded_files[i].name, list(df.index.values), on_change=None)
+
+         
+    final_df = pd.DataFrame()    
+    for i in range(len(data_array)):
+        exclude_list = eval("exclude_"+str(i))
+        data_array[i] = data_array[i].drop(index=exclude_list)
+        # st.write(data_array[i])
+        min_fps = data_array[i].groupby('Resolution')['1% FPS'].mean().round(1)
+        avg_fps = data_array[i].groupby('Resolution')['Avg FPS'].mean().round(1)
+        pwr_agv = data_array[i].groupby('Resolution')['PCAT Power (Watts)'].mean().round(1)
+        avg_fps_watt = round(avg_fps / pwr_agv, 2)
+        
+
+        # temp_df = pd.concat([min_fps, avg_fps, pwr_agv, avg_fps_watt], keys=['min_fps', 'avg_fps', 'pwr_agv', 'avg_fps_watt'], axis=1).reset_index()
+        # temp_df['gpu'] = data_array[i]['GPU0']
+
+        temp_df = pd.concat([min_fps, avg_fps, pwr_agv, avg_fps_watt], keys=['score_min_fps', 'score_avg_fps', 'score_pwr_agv', 'score_avg_fps_watt'], axis=1).reset_index()
+
+        
+        # temp_df['heading'] = data_array[i]['GPU0'].mode()
+        temp_df = temp_df.assign(heading=data_array[i]['GPU0'])
+        final_df = pd.concat([final_df, temp_df])
+
+
+    # col_col1, col_col2, col_col3, col_col4 = st.columns(4)
+    # colours = {}
+    # legend = {}
+    # default_cols = config["default_colours"]
+    # col_index = 0
+    # for i, column in enumerate(final_df.columns):
+    #     if final_df[column].name.startswith("score_"):
+    #     # st.color_picker("Bar " + str(i+1) + " Colour")
+    #         colours["col"+str(i)] = eval("col_col"+str(i)).color_picker(final_df.columns.tolist()[i]+" Colour", default_cols[col_index])
+    #         legend["col"+str(i)] = eval("col_col"+str(i)).text_input(final_df.columns.tolist()[i] + " Legend Text", final_df.columns.tolist()[i].split("_")[1])
+    #         col_index = col_index + 1
+
+    res_selection = st.selectbox(
+                    "Resolution", 
+                    final_df["Resolution"].unique()
+                )
+
+  
+
+    final_df = final_df[final_df["Resolution"] == res_selection]
+
+    fps_df = final_df.drop(columns=['score_pwr_agv', 'score_avg_fps_watt'])
+    pwr_df = final_df.drop(columns=['score_min_fps','score_avg_fps', 'score_avg_fps_watt'])
+
+            
+    st.write(final_df)
+
+    chart_selection = st.selectbox(
+                    "Chart Type", 
+                    ("FPS", "Power")
+                )
+
+    if chart_selection == "FPS":
+        filename = "FPS Chart.png"
+        df = fps_df
+        sort = 'score_avg_fps'
+    else:
+        filename = "PWR Chart.png"
+        df = pwr_df
+        sort = 'score_pwr_agv'
+
+
+    # -----------------------------------------Config Options--------------------------------------------------------------------
 
     # Number of colors calc
     score_cols = df.columns.str.startswith('score_').sum()
@@ -161,8 +238,9 @@ if uploaded_file is not None:
     highlight_color = st.color_picker("Highlight Colour", default_cols[5], disabled=highlight_color_disabled)
 
 
-    filename = 'output.png'
+
     if st.button("Generate Chart"):
+        filename = "FPS Chart.png"
         chart.generate_chart(df, 
                             filename, 
                             size, 
@@ -191,10 +269,14 @@ if uploaded_file is not None:
             btn = st.download_button(
                 label="Download chart",
                 data=file,
-                file_name=title,
+                file_name=filename,
                 mime="image/png",
             )
+
 else:
     st.write("Waiting on file upload...")
 
-    
+
+
+
+
