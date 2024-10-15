@@ -63,7 +63,7 @@ if uploaded_files != []:
             st.write(df)
 
 
-        locals()["exclude_"+str(i)] = st.multiselect("Exclude Columns " + uploaded_files[i].name, list(df.index.values), on_change=None)
+        locals()["exclude_"+str(i)] = st.multiselect("Exclude Rows " + uploaded_files[i].name, list(df.index.values), on_change=None)
 
          
     final_df = pd.DataFrame()    
