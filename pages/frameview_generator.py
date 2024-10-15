@@ -47,13 +47,14 @@ uploaded_files = st.file_uploader("Choose first CSV file", type="csv", accept_mu
 
 final_df = None
 
-if uploaded_files is not None:
+print(uploaded_files)
+
+if uploaded_files != []:
     data_array = []
     # with st.form("FormTest"):
     for i in range(len(uploaded_files)):
         df = pd.read_csv(uploaded_files[i])
-        # st.write(uploaded_files[i].name)
-        # st.write(df)
+
         data_array.append(df)
         
         preview = st.checkbox("Show Preview for " + uploaded_files[i].name)
@@ -75,36 +76,17 @@ if uploaded_files is not None:
         pwr_agv = data_array[i].groupby('Resolution')['PCAT Power (Watts)'].mean().round(1)
         avg_fps_watt = round(avg_fps / pwr_agv, 2)
         
-
-        # temp_df = pd.concat([min_fps, avg_fps, pwr_agv, avg_fps_watt], keys=['min_fps', 'avg_fps', 'pwr_agv', 'avg_fps_watt'], axis=1).reset_index()
-        # temp_df['gpu'] = data_array[i]['GPU0']
-
         temp_df = pd.concat([min_fps, avg_fps, pwr_agv, avg_fps_watt], keys=['score_min_fps', 'score_avg_fps', 'score_pwr_agv', 'score_avg_fps_watt'], axis=1).reset_index()
 
-        
-        # temp_df['heading'] = data_array[i]['GPU0'].mode()
         temp_df = temp_df.assign(heading=data_array[i]['GPU0'])
         final_df = pd.concat([final_df, temp_df])
 
-
-    # col_col1, col_col2, col_col3, col_col4 = st.columns(4)
-    # colours = {}
-    # legend = {}
-    # default_cols = config["default_colours"]
-    # col_index = 0
-    # for i, column in enumerate(final_df.columns):
-    #     if final_df[column].name.startswith("score_"):
-    #     # st.color_picker("Bar " + str(i+1) + " Colour")
-    #         colours["col"+str(i)] = eval("col_col"+str(i)).color_picker(final_df.columns.tolist()[i]+" Colour", default_cols[col_index])
-    #         legend["col"+str(i)] = eval("col_col"+str(i)).text_input(final_df.columns.tolist()[i] + " Legend Text", final_df.columns.tolist()[i].split("_")[1])
-    #         col_index = col_index + 1
 
     res_selection = st.selectbox(
                     "Resolution", 
                     final_df["Resolution"].unique()
                 )
 
-  
 
     final_df = final_df[final_df["Resolution"] == res_selection]
 
